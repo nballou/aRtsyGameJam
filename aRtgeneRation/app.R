@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyWidgets)
 library(colourpicker)
+library(shinyjqui)
 library(aRtsy)
 
 # Define UI for application that draws a histogram
@@ -22,7 +23,8 @@ ui <- fluidPage(
             selectInput(inputId = "generator",
                         label = "Generator",
                         choices = c("Squares",
-                                    "Ribbons")
+                                    "Ribbons"),
+                        helpText("What algorithm would you like to use?")
             ),
 
             numericInput(inputId = "seed",
@@ -30,17 +32,47 @@ ui <- fluidPage(
                          value = 8675309
             ),
 
-            selectInput(inputId = "colors",
-                        label = "Color Palette",
-                        choices = c("Dark Autumn" = "dark1",
-                                    "Gustav Klimt" = "klimt"),
+            checkboxInput(inputId = "chooseOwnColors",
+                          label = "Choose colors manually?",
+                          value = FALSE),
+
+
+            conditionalPanel(
+                condition = "input.chooseOwnColors == 1",
+                colourInput(inputId = "color1",
+                            label = "Color 1",
+                            value = "#317da3"),
+
+                colourInput(inputId = "color2",
+                            label = "Color 2",
+                            value = "#cdd690"),
+
+                colourInput(inputId = "color3",
+                            label = "Color 3",
+                            value = "#a63f6a"),
             ),
 
-            numericInput(inputId = "plotHeight",
-                         label = "Plot Height",
-                         min = 100,
-                         max = 1000,
-                         value = 500),
+            conditionalPanel(
+                condition = "input.chooseOwnColors == 0",
+                selectInput(inputId = "colorPalette",
+                            label = "Color Palette",
+                            choices = c("Dark Autumn" = "dark1",
+                                        "Gustav Klimt" = "klimt"),
+                ),
+            ),
+
+
+            # sliderInput(inputId = "plotHeight",
+            #              label = "Plot Height (Pixels)",
+            #              min = 100,
+            #              max = 3000,
+            #              value = 500),
+            #
+            # sliderInput(inputId = "plotWidth",
+            #              label = "Plot Width (Pixels)",
+            #              min = 100,
+            #              max = 3000,
+            #              value = 500),
 
             conditionalPanel(
                 condition = "input.generator == 'Squares'",
@@ -59,7 +91,8 @@ ui <- fluidPage(
                             label = "Ratio",
                             min = 1,
                             max = 3,
-                            value = 1.618),
+                            value = 1.62,
+                            step = .01),
 
                 sliderInput(inputId = "resolution",
                             label = "resolution",
@@ -75,7 +108,7 @@ ui <- fluidPage(
 
             # Show a plot of the generated distribution
             mainPanel(
-                plotOutput("aRt")
+                jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
             )
         )
 )
@@ -83,24 +116,34 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
-    output$aRt <- renderPlot({
-        set.seed(input$seed)
+    output$aRt <- renderPlot(
+        # height = function() input$plotHeight,
+        # width = function() input$plotWidth,
+        {
+            set.seed(input$seed)
 
-        height = function() input$plotHeight
+            if (input$generator == "Squares") {
 
-        if (input$generator == "Squares") {
-            canvas_squares(colors = colorPalette(input$colors),
-                           background = input$borderColor,
-                           cuts = input$cuts,
-                           ratio = input$ratio,
-                           resolution = input$resolution)
+                if (input$chooseOwnColors == TRUE) {
+                    plotColors = c(input$color1, input$color2, input$color3)
+                }
+
+                else if (input$chooseOwnColors == FALSE) {
+                    plotColors = colorPalette(input$colorPalette)
+                }
+                canvas_squares(colors = plotColors,
+                               background = input$borderColor,
+                               cuts = input$cuts,
+                               ratio = input$ratio,
+                               resolution = input$resolution)
+            }
+
+            else if (input$generator == "Ribbons") {
+                canvas_ribbons(colors = colorPalette(input$colors))
+            }
+
         }
-
-        else if (input$generator == "Ribbons") {
-            canvas_ribbons(colors = colorPalette(input$colors))
-        }
-
-    })
+    )
 }
 
 # Run the application
