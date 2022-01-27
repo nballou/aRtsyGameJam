@@ -159,6 +159,9 @@ ui <- fluidPage(
     ),
 
     # Create resizable image as output
+
+    actionButton("save", "Save image"),
+
     mainPanel(
       jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
     )
@@ -230,6 +233,8 @@ server <- function(input, output) {
                             cuts = input$cuts,
                             ratio = input$ratio,
                             resolution = input$resolution)
+
+      observeEvent(input$save, {saveCanvas(art, filename = "myArtwork.png")})
     }
 
     # Generator for ribbon style images
