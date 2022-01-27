@@ -3,147 +3,226 @@ library(shinyWidgets)
 library(colourpicker)
 library(shinyjqui)
 library(aRtsy)
+library(randomcoloR)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
-    # Application title
-    titlePanel("aRt GeneRator"),
+  # Application title
+  titlePanel("aRt GeneRator"),
 
-    # Dashboard color
-    setBackgroundColor(
-        color = c("#F7FBFF", "#2171B5"),
-        gradient = "radial",
-        direction = c("top", "left")
-    ),
+  # Dashboard color
+  setBackgroundColor(
+    color = c("#F7FBFF", "#2171B5"),
+    gradient = "radial",
+    direction = c("top", "left")
+  ),
 
-    # Sidebar with a slider input for number of bins
-    sidebarLayout(
-        sidebarPanel(
-            selectInput(inputId = "generator",
-                        label = "Generator",
-                        choices = c("Squares",
-                                    "Ribbons"),
-                        helpText("What algorithm would you like to use?")
-            ),
+  tags$style(
+    HTML('
+         #buttons {
+         background-color:yellow; position:fixed; margin-bottom:50px; opacity:1; height:50px; z-index:5;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         }
 
-            numericInput(inputId = "seed",
-                         label = "Random Seed",
-                         value = 8675309
-            ),
+         #randomSeedRow {
+        height:100px;
+         }
 
-            checkboxInput(inputId = "chooseOwnColors",
-                          label = "Choose colors manually?",
-                          value = FALSE),
+         ')
+  ),
 
+  # Sidebar with a slider input for number of bins
+  sidebarLayout(
+    sidebarPanel(
 
-            conditionalPanel(
-                condition = "input.chooseOwnColors == 1",
-                colourInput(inputId = "color1",
-                            label = "Color 1",
-                            value = "#317da3"),
+      selectInput(inputId = "generator",
+                  label = "Generator",
+                  choices = c("Squares",
+                              "Ribbons"),
+                  helpText("What algorithm would you like to use?")
+      ),
 
-                colourInput(inputId = "color2",
-                            label = "Color 2",
-                            value = "#cdd690"),
-
-                colourInput(inputId = "color3",
-                            label = "Color 3",
-                            value = "#a63f6a"),
-            ),
-
-            conditionalPanel(
-                condition = "input.chooseOwnColors == 0",
-                selectInput(inputId = "colorPalette",
-                            label = "Color Palette",
-                            choices = c("Dark Autumn" = "dark1",
-                                        "Gustav Klimt" = "klimt"),
-                ),
-            ),
-
-
-            # sliderInput(inputId = "plotHeight",
-            #              label = "Plot Height (Pixels)",
-            #              min = 100,
-            #              max = 3000,
-            #              value = 500),
-            #
-            # sliderInput(inputId = "plotWidth",
-            #              label = "Plot Width (Pixels)",
-            #              min = 100,
-            #              max = 3000,
-            #              value = 500),
-
-            conditionalPanel(
-                condition = "input.generator == 'Squares'",
-
-                colourInput(inputId = "borderColor",
-                            label = "Border color",
-                            value = "Black"),
-
-                sliderInput(inputId = "cuts",
-                            label = "Cuts",
-                            min = 1,
-                            max = 10000,
-                            value = 50),
-
-                sliderInput(inputId = "ratio",
-                            label = "Ratio",
-                            min = 1,
-                            max = 3,
-                            value = 1.62,
-                            step = .01),
-
-                sliderInput(inputId = "resolution",
-                            label = "resolution",
-                            min = 50,
-                            max = 1000,
-                            value = 200)
-                # selectInput(inputId = "colors",
-                #             label = "Color Palette",
-                #             choices = c("Dark Autumn" = "dark1",
-                #                         "Gustav Klimt" = "klimt"),
-                ),
+      fluidRow(
+        id = "randomSeedRow",
+        align = "center",
+        column(width = 3,
+               numericInput(inputId = "seed",
+                            label = "Seed",
+                            value = as.integer(runif(1, min = 0, max = 100000)))
         ),
 
-            # Show a plot of the generated distribution
-            mainPanel(
-                jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
-            )
+        column(
+          width = 3,
+          actionButton(inputId = "regenSeed",
+                       "Get new seed")
         )
+      ),
+
+      radioGroupButtons(inputId = "colorChoice",
+                        label = "How would you like to choose colors?",
+                        choices = c("Color Palette" = "colorPalette",
+                                    "Manual colors" = "manualColors",
+                                    "Manual gradient" = "manualGradient")
+      ),
+
+      conditionalPanel(
+        condition = "input.colorChoice == 'colorPalette'",
+
+        selectInput(inputId = "colorPalette",
+                    label = "Color Palette",
+                    choices = c("Dark Autumn" = "dark1",
+                                "Gustav Klimt" = "klimt"),
+        ),
+      ),
+
+      conditionalPanel(
+        condition = "input.colorChoice == 'manualColors'",
+
+        sliderInput(inputId = "numColors",
+                    label = "Number of Colors",
+                    min = 1,
+                    max = 6,
+                    value = 2),
+
+        uiOutput("manualColors")
+
+        # colourInput(inputId = "color1",
+        #             label = "Color 1",
+        #             value = "#317da3"),
+        #
+        # colourInput(inputId = "color2",
+        #             label = "Color 2",
+        #             value = "#cdd690"),
+        #
+        # colourInput(inputId = "color3",
+        #             label = "Color 3",
+        #             value = "#a63f6a"),
+      ),
+
+
+      conditionalPanel(
+        condition = "input.colorChoice == 'manualGradient'",
+
+        colourInput(inputId = "color1",
+                    label = "Color 1",
+                    value = "#317da3"),
+
+        colourInput(inputId = "color2",
+                    label = "Color 2",
+                    value = "#cdd690"),
+      ),
+
+      # Options for "Squares" generator
+      conditionalPanel(
+        condition = "input.generator == 'Squares'",
+
+        # colourInput(inputId = "borderColor",
+        #             label = "Border color",
+        #             value = "Black"),
+
+        sliderInput(inputId = "cuts",
+                    label = "Cuts",
+                    min = 1,
+                    max = 10000,
+                    value = 50),
+
+        sliderInput(inputId = "ratio",
+                    label = "Ratio",
+                    min = 1,
+                    max = 3,
+                    value = 1.62,
+                    step = .01),
+
+        sliderInput(inputId = "resolution",
+                    label = "resolution",
+                    min = 50,
+                    max = 1000,
+                    value = 200)
+
+
+      ),
+
+      actionButton("save", "Save image"),
+    ),
+
+    # Create resizable image as output
+    mainPanel(
+      jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
+    )
+  )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output) {
 
-    output$aRt <- renderPlot(
-        # height = function() input$plotHeight,
-        # width = function() input$plotWidth,
-        {
-            set.seed(input$seed)
+  # output$seed <- renderUI(
+  #     numericInput("seed", "Random seed", value = as.integer(runif(1, min = 0, max = 1000000)))
+  # )
+  #
+  observeEvent(input$regenSeed, {
+    updateNumericInput(inputId = "seed", value = as.integer(runif(1, min = 0, max = 1000000)))
+  })
 
-            if (input$generator == "Squares") {
+  # Dynamically create color selectors based on the number of colors chosen
+  output$manualColors <- renderUI({
+    lapply(1:input$numColors, function(i) {
+      # removeUI(
+      #     selector = "div:has(> #txt)"
+      # )
+      colourInput(inputId = paste0('manualColor', i),
+                  label = paste0('Color ', i),
+                  value = randomColor())
+    })
+  })
 
-                if (input$chooseOwnColors == TRUE) {
-                    plotColors = c(input$color1, input$color2, input$color3)
-                }
+  output$aRt <- renderPlot({
 
-                else if (input$chooseOwnColors == FALSE) {
-                    plotColors = colorPalette(input$colorPalette)
-                }
-                canvas_squares(colors = plotColors,
-                               background = input$borderColor,
-                               cuts = input$cuts,
-                               ratio = input$ratio,
-                               resolution = input$resolution)
-            }
+    set.seed(input$seed)
 
-            else if (input$generator == "Ribbons") {
-                canvas_ribbons(colors = colorPalette(input$colors))
-            }
+    if (input$generator == "Squares") {
 
+      if (input$colorChoice == "manualColors") {
+
+        labels <- paste0("manualColor", i:input$numColors)
+
+        plotColors <- c()
+        for (i in 1:length(labels)) {
+          plotColors <- c(plotColors, input[[labels[i]]])
         }
-    )
+      }
+
+      else if (input$colorChoice == "colorPalette") {
+        plotColors <- colorPalette(input$colorPalette)
+      }
+
+      art <- canvas_squares(colors = plotColors,
+                            background = input$borderColor,
+                            cuts = input$cuts,
+                            ratio = input$ratio,
+                            resolution = input$resolution)
+
+      filename <- str(runif(1))
+      observeEvent(input$save, {saveCanvas(art, filename = str(filename) + ".png")})
+
+      # else if (input$chooseOwnColors == FALSE) {
+      #     plotColors = colorPalette(input$colorPalette)
+      # }
+
+      #
+      # if (input$chooseOwnColors == TRUE) {
+      #     art <- art +
+      #         ggplot2::scale_fill_gradient(low = input$color1, high = input$color2)
+      # }
+    }
+
+    else if (input$generator == "Ribbons") {
+      art <- canvas_ribbons(colors = colorPalette(input$colors))
+    }
+    art
+  })
 }
 
 # Run the application
