@@ -156,11 +156,12 @@ ui <- fluidPage(
                     max = 3,
                     value = 2),
       ),
+
+      actionButton("save", "Save image"),
+
     ),
 
     # Create resizable image as output
-
-    actionButton("save", "Save image"),
 
     mainPanel(
       jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
@@ -170,6 +171,9 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
+
+  req(input$seed)
+  req(input$numColors)
 
   observeEvent(input$regenSeed, {
     updateNumericInput(inputId = "seed", value = as.integer(runif(1, min = 0, max = 1000000)))
@@ -233,8 +237,6 @@ server <- function(input, output) {
                             cuts = input$cuts,
                             ratio = input$ratio,
                             resolution = input$resolution)
-
-      observeEvent(input$save, {saveCanvas(art, filename = "myArtwork.png")})
     }
 
     # Generator for ribbon style images
@@ -249,6 +251,7 @@ server <- function(input, output) {
                                    layers = input$layers,
                                    depth = input$depth)
     }
+    observeEvent(input$save, {saveCanvas(art, filename = "myArtwork.png")})
     art
   })
 }
