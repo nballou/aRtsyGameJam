@@ -18,6 +18,22 @@ ui <- fluidPage(
         direction = c("top", "left")
     ),
 
+    tags$style(
+        HTML('
+         #buttons {
+         background-color:yellow; position:fixed; margin-bottom:50px; opacity:1; height:50px; z-index:5;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         }
+
+         #randomSeedRow {
+        height:100px;
+         }
+
+         ')
+    ),
+
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
@@ -29,16 +45,27 @@ ui <- fluidPage(
                         helpText("What algorithm would you like to use?")
             ),
 
-            numericInput(inputId = "seed",
-                         label = "Random Seed",
-                         value = 8675309
+            fluidRow(
+                id = "randomSeedRow",
+                align = "center",
+                column(width = 3,
+                       numericInput(inputId = "seed",
+                                    label = "Seed",
+                                    value = as.integer(runif(1, min = 0, max = 100000)))
+                ),
+
+                column(
+                    width = 3,
+                    actionButton(inputId = "regenSeed",
+                                 "Get new seed")
+                )
             ),
 
             radioGroupButtons(inputId = "colorChoice",
-                                 label = "How would you like to choose colors?",
-                                 choices = c("Color Palette" = "colorPalette",
-                                             "Manual colors" = "manualColors",
-                                             "Manual gradient" = "manualGradient")
+                              label = "How would you like to choose colors?",
+                              choices = c("Color Palette" = "colorPalette",
+                                          "Manual colors" = "manualColors",
+                                          "Manual gradient" = "manualGradient")
             ),
 
             conditionalPanel(
@@ -114,22 +141,33 @@ ui <- fluidPage(
                             min = 50,
                             max = 1000,
                             value = 200)
-                ),
+            ),
         ),
 
-            # Create resizable image as output
-            mainPanel(
-                jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
-            )
+        # Create resizable image as output
+        mainPanel(
+            jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
         )
+    )
 )
 
 # Define server logic
 server <- function(input, output) {
 
+    # output$seed <- renderUI(
+    #     numericInput("seed", "Random seed", value = as.integer(runif(1, min = 0, max = 1000000)))
+    # )
+    #
+    observeEvent(input$regenSeed, {
+        updateNumericInput(inputId = "seed", value = as.integer(runif(1, min = 0, max = 1000000)))
+    })
+
     # Dynamically create color selectors based on the number of colors chosen
     output$manualColors <- renderUI({
         lapply(1:input$numColors, function(i) {
+            # removeUI(
+            #     selector = "div:has(> #txt)"
+            # )
             colourInput(inputId = paste0('manualColor', i),
                         label = paste0('Color ', i),
                         value = randomColor())
@@ -138,42 +176,45 @@ server <- function(input, output) {
 
     output$aRt <- renderPlot({
 
-            set.seed(input$seed)
+        set.seed(input$seed)
 
-            if (input$generator == "Squares") {
+        if (input$generator == "Squares") {
 
-                if (input$colorChoice == "manualColors") {
-                    plotColors <- NULL
-                    testColor = input$manualColor1
-                    inputValues = isolate(reactiveValuesToList(input))
-                    # print(inputValues)
-                    plotColors = inputValues[grepl("manualColor", names(inputValues), fixed = TRUE)]
-                    print(plotColors)
+            if (input$colorChoice == "manualColors") {
+
+                labels <- paste0("manualColor", i:input$numColors)
+
+                plotColors <- c()
+                for (i in 1:length(labels)) {
+                    plotColors <- c(plotColors, input[[labels[i]]])
                 }
-
-                art <- canvas_squares(colors = plotColors,
-                                      background = input$borderColor,
-                                      cuts = input$cuts,
-                                      ratio = input$ratio,
-                                      resolution = input$resolution)
-
-                # else if (input$chooseOwnColors == FALSE) {
-                #     plotColors = colorPalette(input$colorPalette)
-                # }
-
-                #
-                # if (input$chooseOwnColors == TRUE) {
-                #     art <- art +
-                #         ggplot2::scale_fill_gradient(low = input$color1, high = input$color2)
-                # }
             }
 
-
-
-            else if (input$generator == "Ribbons") {
-                art <- canvas_ribbons(colors = colorPalette(input$colors))
+            else if (input$colorChoice == "colorPalette") {
+                plotColors <- colorPalette(input$colorPalette)
             }
-            art
+
+            art <- canvas_squares(colors = plotColors,
+                                  background = input$borderColor,
+                                  cuts = input$cuts,
+                                  ratio = input$ratio,
+                                  resolution = input$resolution)
+
+            # else if (input$chooseOwnColors == FALSE) {
+            #     plotColors = colorPalette(input$colorPalette)
+            # }
+
+            #
+            # if (input$chooseOwnColors == TRUE) {
+            #     art <- art +
+            #         ggplot2::scale_fill_gradient(low = input$color1, high = input$color2)
+            # }
+        }
+
+        else if (input$generator == "Ribbons") {
+            art <- canvas_ribbons(colors = colorPalette(input$colors))
+        }
+        art
     })
 }
 
