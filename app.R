@@ -89,7 +89,7 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.colorChoice == 'manualGradient'",
 
-        numericInput(inputId = "numGradientColors",
+        sliderInput(inputId = "numGradientColors",
                      label = "Number of Colors in Gradient",
                      min = 1,
                      max = 8,
@@ -172,11 +172,8 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output) {
 
-  req(input$seed)
-  req(input$numColors)
-
   observeEvent(input$regenSeed, {
-    updateNumericInput(inputId = "seed", value = as.integer(runif(1, min = 0, max = 1000000)))
+    updateNumericInput(inputId = "seed", value = as.integer(runif(1, min = 0, max = 99999)))
   })
 
   # Dynamically create color selectors based on the number of colors chosen
@@ -251,7 +248,7 @@ server <- function(input, output) {
                                    layers = input$layers,
                                    depth = input$depth)
     }
-    observeEvent(input$save, {saveCanvas(art, filename = "myArtwork.png")})
+    observeEvent(input$save, {saveCanvas(art, filename = paste0("myArtwork", sample(1:100, 1), ".png"))})
     art
   })
 }
