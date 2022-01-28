@@ -188,7 +188,7 @@ ui <- navbarPage(title = "aRt GeneRator",
                                                                  min = 1,
                                                                  max = 60,
                                                                  value = 20),
-                                                     "This art works by layering several geometric shapes and deforming each shape by repeatedly splitting its edges."
+                                                     "This art works by layering several geometric shapes and deforming each shape by repeatedly splitting its edges. Warning: adding layers is computionally intensive, so high values may take longer to render."
                                               ),
 
                                               tipify(sliderInput(inputId = "userMean",
