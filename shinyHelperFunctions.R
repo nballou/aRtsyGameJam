@@ -47,3 +47,48 @@ my_canvas_watercolors <- function(colors, background = "#fafafa", layers = 50,
   artwork <- theme_canvas(artwork, background)
   return(artwork)
 }
+
+my_canvas_ribbons <- function(colors, background = "#fdf5e6", triangle = TRUE,
+                              maxHeight = 75, minHeight = 25, ribbonWidth = 2.5) {
+
+  maxHeight <- maxHeight - 12
+  minHeight <- minHeight - 12
+  # Create an empty figure
+  artwork <- ggplot2::ggplot() +
+    ggplot2::xlim(c(0, 100)) +
+    ggplot2::ylim(0, 100)
+  # Determine points on the triangle
+  tpl <- data.frame(x = 16:49, y = seq(from = 16, to = 75, length.out = 34))
+  tpl <- tpl[which(tpl$y < maxHeight & tpl$y > minHeight), ]
+  tpr <- data.frame(x = 51:84, y = seq(from = 74, to = 16, length.out = 34))
+  tpr <- tpr[which(tpr$y < maxHeight & tpr$y > minHeight), ]
+  for (i in 1:length(colors)) {
+    # Determine points on left side of triangle
+    bpb <- data.frame(x = 0, y = sample(minHeight:maxHeight, size = 1))
+    fpb <- tpl[sample(1:nrow(tpl), size = 1), ]
+    spb <- tpr[sample(1:nrow(tpr), size = 1), ]
+    epb <- data.frame(x = 100, y = sample(minHeight:maxHeight, size = 1))
+    # Determine points on right side of triangle
+    bpt <- data.frame(x = 0, y = bpb$y + ribbonWidth*2)
+    fpt <- data.frame(x = fpb$x + ribbonWidth, y = fpb$y + ribbonWidth*2)
+    spt <- data.frame(x = spb$x - ribbonWidth, y = spb$y + ribbonWidth*2)
+    ept <- data.frame(x = 100, y = epb$y + ribbonWidth*2)
+    # Combine polygon points
+    polygon <- rbind(bpb, fpb, spb, epb, ept, spt, fpt, bpt)
+    artwork <- artwork + ggplot2::geom_polygon(
+      data = polygon, mapping = ggplot2::aes(x = x, y = y),
+      fill = colors[i], color = NA,
+      stat = "identity", alpha = 1
+    )
+  }
+  # (Optionally) draw the triangle
+  if (triangle) {
+    artwork <- artwork + ggplot2::geom_polygon(
+      data = data.frame(x = c(15, 50, 85), y = c(15, 75, 15)), mapping = ggplot2::aes(x = x, y = y),
+      fill = NA, color = "black",
+      stat = "identity", size = 1
+    )
+  }
+  artwork <- theme_canvas(artwork, background)
+  return(artwork)
+}
