@@ -4,6 +4,7 @@ library(colourpicker)
 library(shinyjqui)
 library(aRtsy)
 library(viridisLite)
+library(shinyBS)
 
 # Load helper functions
 source("shinyHelperFunctions.R")
@@ -28,15 +29,16 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
 
-      radioGroupButtons(inputId = "generator",
+      h5("Play around with the options to create a piece of art you like. If you generate one you want to keep
+         you can save it using the 'save' button below."),
+
+      tipify(radioGroupButtons(inputId = "generator",
                         label = "Generator",
                         choices = c("Squares",
                                     "Ribbons",
                                     "Watercolor"),
                         selected = sample(c("Squares","Ribbons","Watercolor"), 1),
-                        individual = TRUE,
-                        helpText("What algorithm would you like to use?")
-      ),
+                        individual = TRUE), "What algorithm would you like to use?"),
 
       fluidRow(
         column(width = 6,
@@ -48,8 +50,8 @@ ui <- fluidPage(
         column(
           width = 3,
           div(style = "margin-top: 25px;",
-              actionButton(inputId = "regenSeed",
-                           label = "Get new seed"))
+              tipify(actionButton(inputId = "regenSeed",
+                           label = "Get new seed"), "Click this to generate a new initial random piece to make changes to"))
         ),
       ),
 
@@ -112,24 +114,24 @@ ui <- fluidPage(
         #             label = "Border color",
         #             value = "Black"),
 
-        sliderInput(inputId = "cuts",
+        tipify(sliderInput(inputId = "cuts",
                     label = "Cuts",
                     min = 1,
                     max = 100,
-                    value = 20),
+                    value = 20), "This algorithm makes repeated cuts into the canvas at random locations and colouring areas these cuts create."),
 
-        sliderInput(inputId = "ratio",
+        tipify(sliderInput(inputId = "ratio",
                     label = "Ratio",
                     min = 1,
                     max = 3,
                     value = 1.62,
-                    step = .01),
+                    step = .01), "???"),
 
-        sliderInput(inputId = "resolution",
+        tipify(sliderInput(inputId = "resolution",
                     label = "resolution",
                     min = 20,
                     max = 400,
-                    value = 100)
+                    value = 100), "Increasing the resolution increases the quality of the artwork but also increases the computation time exponentially."),
       ),
 
       # Options for "Watercolor" generator
@@ -157,7 +159,11 @@ ui <- fluidPage(
                     value = 2),
       ),
 
+      h6("PS: the image is resizable."),
+
       actionButton("save", "Save image"),
+
+      h6("This app was created by Nick Ballou and Elena Petrovskaya, based on the aRtsy package by Koen Derks."),
 
     ),
 
