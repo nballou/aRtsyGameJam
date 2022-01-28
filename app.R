@@ -13,209 +13,205 @@ source("shinyHelperFunctions.R")
 allColors = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
 
 # Define UI
-ui <- fluidPage(
+ui <- navbarPage(title = "aRt GeneRator",
+                 theme = shinytheme("spacelab"),
+                 inverse = TRUE,
+                 tabPanel(title = "Generator",
+                          # Dashboard color
+                          setBackgroundColor(
+                            color = c("#F7FBFF", "#8bbac9"),
+                            gradient = "radial",
+                            direction = c("top", "left")
+                          ),
 
-  tags$head(tags$style(
-    HTML('
-         #sidebar {
-            background-color: #fff9e0;
-        }
+                          # Sidebar with user inputs
+                          sidebarLayout(
+                            sidebarPanel( # Sidebar panel ####
+                                          id = "sidebar",
+                                          radioGroupButtons(inputId = "generator",
+                                                            label = "Generator",
+                                                            choices = c("Squares",
+                                                                        "Ribbons",
+                                                                        "Watercolor"),
+                                                            selected = sample(c("Squares","Ribbons","Watercolor"), 1),
+                                                            individual = TRUE,
+                                                            helpText("What algorithm would you like to use?")
+                                          ),
 
-        body, label, input, button, select {
-          font-family: "Verdana";
-        }')
-  )),
+                                          fluidRow(
+                                            column(width = 6,
+                                                   numericInput(inputId = "seed",
+                                                                label = "Seed",
+                                                                value = as.integer(runif(1, min = 0, max = 100000)))
+                                            ),
 
-  # # Application title
-  navbarPage(title = "aRt GeneRator",
-             theme = shinytheme("spacelab"),
-             inverse = TRUE),
-  # titlePanel(h1("aRt GeneRator",
-  #               style='background-color:coral;
-  #                    padding-left: 15px')),
+                                            column(
+                                              width = 3,
+                                              div(style = "margin-top: 25px;",
+                                                  actionButton(inputId = "regenSeed",
+                                                               label = "Get new seed"))
+                                            ),
+                                          ),
 
-  # Dashboard color
-  setBackgroundColor(
-    color = c("#F7FBFF", "#8bbac9"),
-    gradient = "radial",
-    direction = c("top", "left")
-  ),
+                                          radioGroupButtons(inputId = "colorChoice",
+                                                            label = "How would you like to choose colors?",
+                                                            choices = c("Color Palette" = "colorPalette",
+                                                                        "Manual colors" = "manualColors",
+                                                                        "Manual gradient" = "manualGradient"),
+                                                            individual = TRUE
+                                          ),
 
-  # Sidebar with user inputs
-  sidebarLayout(
-    sidebarPanel( # Sidebar panel ####
-                  id = "sidebar",
+                                          # Color options ####
+                                          conditionalPanel(
+                                            condition = "input.colorChoice == 'colorPalette'",
 
-      radioGroupButtons(inputId = "generator",
-                        label = "Generator",
-                        choices = c("Squares",
-                                    "Ribbons",
-                                    "Watercolor"),
-                        selected = sample(c("Squares","Ribbons","Watercolor"), 1),
-                        individual = TRUE,
-                        helpText("What algorithm would you like to use?")
-      ),
+                                            selectInput(inputId = "colorPalette",
+                                                        label = "Color Palette",
+                                                        choices = c("Dark Autumn" = "dark1",
+                                                                    "Gustav Klimt" = "klimt",
+                                                                    "Cividis",
+                                                                    "Magma",
+                                                                    "Rocket"),
+                                            ),
 
-      fluidRow(
-        column(width = 6,
-               numericInput(inputId = "seed",
-                            label = "Seed",
-                            value = as.integer(runif(1, min = 0, max = 100000)))
-        ),
+                                            sliderInput(inputId = "numPaletteColors",
+                                                        label = "Number of Colors in Palette",
+                                                        min = 1,
+                                                        max = 6,
+                                                        value = 2),
 
-        column(
-          width = 3,
-          div(style = "margin-top: 25px;",
-              actionButton(inputId = "regenSeed",
-                           label = "Get new seed"))
-        ),
-      ),
+                                          ),
 
-      radioGroupButtons(inputId = "colorChoice",
-                        label = "How would you like to choose colors?",
-                        choices = c("Color Palette" = "colorPalette",
-                                    "Manual colors" = "manualColors",
-                                    "Manual gradient" = "manualGradient"),
-                        individual = TRUE
-      ),
+                                          conditionalPanel(
+                                            condition = "input.colorChoice == 'manualColors'",
 
-      # Color options ####
-      conditionalPanel(
-        condition = "input.colorChoice == 'colorPalette'",
+                                            sliderInput(inputId = "numColors",
+                                                        label = "Number of Colors",
+                                                        min = 1,
+                                                        max = 6,
+                                                        value = 2),
 
-        selectInput(inputId = "colorPalette",
-                    label = "Color Palette",
-                    choices = c("Dark Autumn" = "dark1",
-                                "Gustav Klimt" = "klimt",
-                                "Cividis",
-                                "Magma",
-                                "Rocket"),
-        ),
+                                            uiOutput("manualColors")
+                                          ),
 
-        sliderInput(inputId = "numPaletteColors",
-                    label = "Number of Colors in Palette",
-                    min = 1,
-                    max = 6,
-                    value = 2),
+                                          conditionalPanel(
+                                            condition = "input.colorChoice == 'manualGradient'",
 
-      ),
+                                            sliderInput(inputId = "numGradientColors",
+                                                        label = "Number of Colors in Gradient",
+                                                        min = 1,
+                                                        max = 8,
+                                                        value = 3),
 
-      conditionalPanel(
-        condition = "input.colorChoice == 'manualColors'",
+                                            colourInput(inputId = "color1",
+                                                        label = "Starting Color",
+                                                        value = "#317da3"),
 
-        sliderInput(inputId = "numColors",
-                    label = "Number of Colors",
-                    min = 1,
-                    max = 6,
-                    value = 2),
+                                            colourInput(inputId = "color2",
+                                                        label = "Ending Color",
+                                                        value = "#cdd690"),
+                                          ),
 
-        uiOutput("manualColors")
-      ),
+                                          conditionalPanel(
+                                            condition = "input.generator == 'Ribbons' | input.generator == 'Watercolor'",
+                                            colourInput(inputId = "background",
+                                                        label = "Background Color",
+                                                        value = "#FFFFFF"),
+                                          ),
 
-      conditionalPanel(
-        condition = "input.colorChoice == 'manualGradient'",
+                                          # "Squares" generator options ####
+                                          conditionalPanel(
+                                            condition = "input.generator == 'Squares'",
 
-        sliderInput(inputId = "numGradientColors",
-                     label = "Number of Colors in Gradient",
-                     min = 1,
-                     max = 8,
-                     value = 3),
+                                            sliderInput(inputId = "cuts",
+                                                        label = "Cuts",
+                                                        min = 1,
+                                                        max = 100,
+                                                        value = 20),
 
-        colourInput(inputId = "color1",
-                    label = "Starting Color",
-                    value = "#317da3"),
+                                            sliderInput(inputId = "ratio",
+                                                        label = "Ratio",
+                                                        min = 1,
+                                                        max = 3,
+                                                        value = 1.62,
+                                                        step = .01),
 
-        colourInput(inputId = "color2",
-                    label = "Ending Color",
-                    value = "#cdd690"),
-      ),
+                                            sliderInput(inputId = "resolution",
+                                                        label = "Resolution",
+                                                        min = 20,
+                                                        max = 400,
+                                                        value = 100)
+                                          ),
 
-      conditionalPanel(
-        condition = "input.generator == 'Ribbons' | input.generator == 'Watercolor'",
-        colourInput(inputId = "background",
-                    label = "Background Color",
-                    value = "#FFFFFF"),
-      ),
+                                          # "Ribbons" generator options ####
+                                          conditionalPanel(
+                                            condition = "input.generator == 'Ribbons'",
 
-      # "Squares" generator options ####
-      conditionalPanel(
-        condition = "input.generator == 'Squares'",
+                                            prettyCheckbox(inputId = "triangle",
+                                                           label = "Triangle?",
+                                                           value = TRUE,
+                                                           bigger = TRUE,
+                                                           outline = TRUE),
 
-        sliderInput(inputId = "cuts",
-                    label = "Cuts",
-                    min = 1,
-                    max = 100,
-                    value = 20),
+                                            sliderInput(inputId = "ribbonWidth",
+                                                        label = "Ribbon Width",
+                                                        value = 2.5,
+                                                        min = 1,
+                                                        max = 10),
 
-        sliderInput(inputId = "ratio",
-                    label = "Ratio",
-                    min = 1,
-                    max = 3,
-                    value = 1.62,
-                    step = .01),
+                                            sliderInput(inputId = "maxHeight",
+                                                        label = "Max Ribbon Height",
+                                                        min = 50,
+                                                        max = 85,
+                                                        value = 75),
 
-        sliderInput(inputId = "resolution",
-                    label = "Resolution",
-                    min = 20,
-                    max = 400,
-                    value = 100)
-      ),
+                                            sliderInput(inputId = "minHeight",
+                                                        label = "Min Ribbon Height",
+                                                        min = 15,
+                                                        max = 50,
+                                                        value = 25),
+                                          ),
 
-      # "Ribbons" generator options ####
-      conditionalPanel(
-        condition = "input.generator == 'Ribbons'",
+                                          # "Watercolor" generator options ####
+                                          conditionalPanel(
+                                            condition = "input.generator == 'Watercolor'",
 
-        prettyCheckbox(inputId = "triangle",
-                       label = "Triangle?",
-                       value = TRUE,
-                       bigger = TRUE,
-                       outline = TRUE),
+                                            sliderInput(inputId = "layers",
+                                                        label = "Layers",
+                                                        min = 1,
+                                                        max = 60,
+                                                        value = 20),
 
-        sliderInput(inputId = "ribbonWidth",
-                    label = "Ribbon Width",
-                    value = 2.5,
-                    min = 1,
-                    max = 10),
+                                            sliderInput(inputId = "depth",
+                                                        label = "Algorithm Depth",
+                                                        min = 1,
+                                                        max = 3,
+                                                        value = 2),
+                                          ),
 
-        sliderInput(inputId = "maxHeight",
-                    label = "Max Ribbon Height",
-                    min = 50,
-                    max = 100,
-                    value = 75),
+                                          actionButton("save", "Save image"),
 
-        sliderInput(inputId = "minHeight",
-                    label = "Min Ribbon Height",
-                    min = 0,
-                    max = 50,
-                    value = 25),
-      ),
+                            ),
 
-      # "Watercolor" generator options ####
-      conditionalPanel(
-        condition = "input.generator == 'Watercolor'",
+                            # Create resizable image as output
+                            mainPanel( # Main Panel ####
+                                       jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
+                            ),
+                          ),
+                 ),
 
-        sliderInput(inputId = "layers",
-                    label = "Layers",
-                    min = 1,
-                    max = 60,
-                    value = 20),
-
-        sliderInput(inputId = "depth",
-                    label = "Algorithm Depth",
-                    min = 1,
-                    max = 3,
-                    value = 2),
-      ),
-
-      actionButton("save", "Save image"),
-
-    ),
-
-    # Create resizable image as output
-    mainPanel( # Main Panel ####
-      jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
-    )
-  )
+                 # Credit tab ####
+                 tabPanel(title = "Credit",
+                          fluidPage(
+                            sidebarPanel(
+                              sliderInput(inputId = "hi",
+                                          label = "hi",
+                                          min = 1,
+                                          max = 10,
+                                          value = 3)
+                            )
+                          )
+                 )
 )
 
 # Define server logic
