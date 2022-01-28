@@ -35,8 +35,9 @@ ui <- navbarPage(title = "aRt GeneRator",
                                                                    label = "Generator",
                                                                    choices = c("Squares",
                                                                                "Ribbons",
-                                                                               "Watercolor"),
-                                                                   selected = sample(c("Squares","Ribbons","Watercolor"), 1),
+                                                                               "Watercolor",
+                                                                               "Collatz"),
+                                                                   selected = sample(c("Squares","Ribbons","Watercolor","Collatz"), 1),
                                                                    individual = TRUE),
                                                  "What algorithm would you like to use?"
                                           ),
@@ -50,9 +51,9 @@ ui <- navbarPage(title = "aRt GeneRator",
 
                                             column(
                                               width = 3,
-                                              div(style = "margin-top: 25px;",
+                                              div(style = "margin-top: 25px; margin-bottom:25px;",
                                                   tipify(actionButton(inputId = "regenSeed",
-                                                                      label = "Get new seed"),
+                                                                      label = "Get New Seed"),
                                                          "Click this to generate a new initial random piece to make changes to")
                                               ),
                                             ),
@@ -117,7 +118,7 @@ ui <- navbarPage(title = "aRt GeneRator",
                                             ),
 
                                             conditionalPanel(
-                                              condition = "input.generator == 'Ribbons' | input.generator == 'Watercolor'",
+                                              condition = "input.generator != 'Squares'",
                                               colourInput(inputId = "background",
                                                           label = "Background Color",
                                                           value = "#FFFFFF"),
@@ -197,6 +198,47 @@ ui <- navbarPage(title = "aRt GeneRator",
                                                                  value = 2),
                                                      "Number of repetitions of the algorithm."
                                               ),
+                                            ),
+
+                                            # "Collatz" generator options ####
+                                            conditionalPanel(
+                                              condition = "input.generator == 'Collatz'",
+
+                                              sliderInput(inputId = "numStrands",
+                                                          label = "Number of Strands",
+                                                          min = 1,
+                                                          max = 500,
+                                                          step = 1,
+                                                          value = 200),
+
+                                              sliderInput(inputId = "strandSize",
+                                                          label = "Strand size",
+                                                          min = .1,
+                                                          max = 10,
+                                                          step = .1,
+                                                          value = 1
+                                              ),
+
+                                              tipify(sliderInput(inputId = "angle1",
+                                                                 label = "First Angle",
+                                                                 min = 0,
+                                                                 max = 0.050,
+                                                                 step = .001,
+                                                                 value = .008),
+                                                     "The angle the strand moves on odd-numbered steps."
+                                              ),
+
+                                              tipify(sliderInput(inputId = "angle2",
+                                                                 label = "Second Angle",
+                                                                 min = 0,
+                                                                 max = 0.050,
+                                                                 step = .001,
+                                                                 value = .0145),
+                                                     "The angle the strand moves on even-numbered steps"
+                                              ),
+                                              checkboxInput(inputId = "side",
+                                                            label = "Turn 90 Degrees?",
+                                                            value = FALSE)
                                             ),
 
                                             h6("P.S. The image is resizable; use the drag icon on the bottom left."),
@@ -309,6 +351,16 @@ server <- function(input, output) {
                                    background = input$background,
                                    layers = input$layers,
                                    depth = input$depth)
+    }
+
+    # Generator for watercolor-style images
+    else if (input$generator == "Collatz") {
+      art <- my_canvas_collatz(colors = plotColors,
+                            n = input$numStrands,
+                            angle.even = input$angle1,
+                            angle.odd = input$angle2,
+                            side = input$side,
+                            strandSize = input$strandSize)
     }
     observeEvent(input$save, {saveCanvas(art, filename = paste0("myArtwork", sample(1:100, 1), ".png"))})
     art

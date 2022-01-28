@@ -1,27 +1,3 @@
-deform <- function(canvas, maxdepth, resolution) {
-  .Call('_aRtsy_deform', PACKAGE = 'aRtsy', canvas, maxdepth, resolution)
-}
-
-.createBasePolygon <- function(color, nlayers, corners, resolution, userMean) {
-  if (nlayers == 1) {
-    xmid <- (resolution / 2)
-    ymid <- (resolution / 2)
-  } else {
-    xmid <- (resolution / 2) + (resolution / 3) * cos(2 * pi * color / nlayers) * stats::rnorm(1, mean = 0.75, sd = 0.25)
-    ymid <- (resolution / 2) + (resolution / 3) * sin(2 * pi * color / nlayers) * stats::rnorm(1, mean = 0.75, sd = 0.25)
-  }
-  radiusx <- sample((resolution / 3):(resolution / 7.5), size = 1)
-  radiusy <- sample((resolution / 3):(resolution / 7.5), size = 1)
-  polyx <- xmid + radiusx * cos(2 * pi * 1:corners / corners)
-  polyy <- ymid + radiusy * sin(2 * pi * 1:corners / corners)
-  coords <- data.frame(x = polyx, y = polyy)
-  coords[nrow(coords) + 1, ] <- coords[1, ]
-  varsegments <- stats::rnorm(nrow(coords), mean = as.numeric(userMean), sd = 3) #user mean
-  canvas <- data.frame(x = coords$x, y = coords$y, s = varsegments)
-  canvas <- deform(canvas, maxdepth = 5, resolution)
-  return(canvas)
-}
-
 my_canvas_watercolors <- function(colors, background = "#fafafa", layers = 50,
                                   depth = 2, resolution = 250, userMean = 1) {
   nlayers <- length(colors)
@@ -31,7 +7,7 @@ my_canvas_watercolors <- function(colors, background = "#fafafa", layers = 50,
   corners <- sample(3:10, size = nlayers, replace = TRUE)
   basePolygons <- list()
   for (i in 1:nlayers) {
-    basePolygons[[i]] <- .createBasePolygon(i, nlayers, corners[i], resolution, userMean)
+    basePolygons[[i]] <- aRtsy:::.createBasePolygon(i, nlayers, corners[i], resolution, userMean)
   }
   for (i in 1:length(colorSequence)) {
     canvas <- basePolygons[[labelSequence[i]]]
@@ -90,5 +66,40 @@ my_canvas_ribbons <- function(colors, background = "#fdf5e6", triangle = TRUE,
     )
   }
   artwork <- theme_canvas(artwork, background)
+  return(artwork)
+}
+
+my_canvas_collatz <- function(colors, background = "#fafafa", n = 200,
+                           angle.even = 0.0075, angle.odd = 0.0145, side = FALSE,
+                           strandSize = 1) {
+  canvas <- data.frame(x = numeric(), y = numeric(), col = numeric(), z = numeric())
+  if (length(n) == 1) {
+    n <- sample(1:1000000, size = n, replace = F)
+  }
+  for (i in n) {
+    series <- rev(aRtsy:::get_collatz_sequence(i))
+    line <- matrix(0, nrow = length(series), ncol = 2)
+    line <- aRtsy:::draw_collatz(line, series, angle.even, angle.odd)
+    line <- data.frame(
+      x = line[, 1],
+      y = line[, 2],
+      col = rep(sample(colors, size = 1), nrow(line)),
+      z = i,
+      size = nrow(line),
+      alpha = nrow(line)
+    )
+    canvas <- rbind(canvas, line)
+  }
+  canvas$z <- as.factor(canvas$z)
+  canvas$size <- 1 - (canvas$size / max(canvas$size))
+  canvas$alpha <- 1 - canvas$size
+  artwork <- ggplot2::ggplot(data = canvas, mapping = ggplot2::aes(x = x, y = y, group = z)) +
+    ggplot2::geom_path(size = canvas$size*strandSize, color = canvas$col, alpha = canvas$alpha, lineend = "round") +
+    ggplot2::xlim(range(canvas$x)) +
+    ggplot2::ylim(range(canvas$y))
+  if (side) {
+    artwork <- artwork + ggplot2::coord_flip()
+  }
+  artwork <- aRtsy::theme_canvas(artwork, background)
   return(artwork)
 }
