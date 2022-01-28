@@ -365,11 +365,12 @@ server <- function(input, output) {
     # Generator for watercolor-style images
     else if (input$generator == "Collatz") {
       art <- my_canvas_collatz(colors = plotColors,
-                            n = input$numStrands,
-                            angle.even = input$angle1,
-                            angle.odd = input$angle2,
-                            side = input$side,
-                            strandSize = input$strandSize)
+                               background = input$background,
+                               n = input$numStrands,
+                               angle.even = input$angle1,
+                               angle.odd = input$angle2,
+                               side = input$side,
+                               strandSize = input$strandSize)
     }
     observeEvent(input$save, {saveCanvas(art, filename = paste0("myArtwork", sample(1:100, 1), ".png"))})
     art
