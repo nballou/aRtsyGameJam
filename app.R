@@ -191,6 +191,14 @@ ui <- navbarPage(title = "aRt GeneRator",
                                                      "This art works by layering several geometric shapes and deforming each shape by repeatedly splitting its edges."
                                               ),
 
+                                              tipify(sliderInput(inputId = "userMean",
+                                                                 label = "Blurriness",
+                                                                 min = 1,
+                                                                 max = 40,
+                                                                 value = 6),
+                                                     "Changes the blurriness of the shapes."
+                                              ),
+
                                               tipify(sliderInput(inputId = "depth",
                                                                  label = "Algorithm Depth",
                                                                  min = 1,
@@ -350,7 +358,8 @@ server <- function(input, output) {
       art <- my_canvas_watercolors(colors = plotColors,
                                    background = input$background,
                                    layers = input$layers,
-                                   depth = input$depth)
+                                   depth = input$depth,
+                                   userMean = input$userMean)
     }
 
     # Generator for watercolor-style images
