@@ -4,6 +4,7 @@ library(colourpicker)
 library(shinyjqui)
 library(aRtsy)
 library(viridisLite)
+library(shinythemes)
 
 # Load helper functions ####
 source("shinyHelperFunctions.R")
@@ -17,20 +18,25 @@ ui <- fluidPage(
   tags$head(tags$style(
     HTML('
          #sidebar {
-            background-color: #fff0b8;
+            background-color: #fff9e0;
         }
 
         body, label, input, button, select {
-          font-family: "Arial";
+          font-family: "Verdana";
         }')
   )),
 
-  # Application title
-  titlePanel("aRt GeneRator"),
+  # # Application title
+  navbarPage(title = "aRt GeneRator",
+             theme = shinytheme("spacelab"),
+             inverse = TRUE),
+  # titlePanel(h1("aRt GeneRator",
+  #               style='background-color:coral;
+  #                    padding-left: 15px')),
 
   # Dashboard color
   setBackgroundColor(
-    color = c("#F7FBFF", "#2171B5"),
+    color = c("#F7FBFF", "#8bbac9"),
     gradient = "radial",
     direction = c("top", "left")
   ),
@@ -252,15 +258,15 @@ server <- function(input, output) {
       }
 
       else if (input$colorPalette == "Cividis") {
-        plotColors <- viridisLite::cividis(sample(1:8, 1))
+        plotColors <- viridisLite::cividis(inupt$numPaletteColors)
       }
 
       else if (input$colorPalette == "Magma") {
-        plotColors <- viridisLite::magma(sample(1:8, 1))
+        plotColors <- viridisLite::magma(inupt$numPaletteColors)
       }
 
       else if (input$colorPalette == "Rocket") {
-        plotColors <- viridisLite::rocket(sample(1:8, 1))
+        plotColors <- viridisLite::rocket(inupt$numPaletteColors)
       }
     }
 
