@@ -5,7 +5,7 @@ library(shinyjqui)
 library(aRtsy)
 library(viridisLite)
 
-# Load helper functions
+# Load helper functions ####
 source("shinyHelperFunctions.R")
 
 # Create list of colors to sample from
@@ -13,6 +13,17 @@ allColors = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = T
 
 # Define UI
 ui <- fluidPage(
+
+  tags$head(tags$style(
+    HTML('
+         #sidebar {
+            background-color: #fff0b8;
+        }
+
+        body, label, input, button, select {
+          font-family: "Arial";
+        }')
+  )),
 
   # Application title
   titlePanel("aRt GeneRator"),
@@ -26,7 +37,8 @@ ui <- fluidPage(
 
   # Sidebar with user inputs
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel( # Sidebar panel ####
+                  id = "sidebar",
 
       radioGroupButtons(inputId = "generator",
                         label = "Generator",
@@ -61,6 +73,7 @@ ui <- fluidPage(
                         individual = TRUE
       ),
 
+      # Color options ####
       conditionalPanel(
         condition = "input.colorChoice == 'colorPalette'",
 
@@ -72,6 +85,13 @@ ui <- fluidPage(
                                 "Magma",
                                 "Rocket"),
         ),
+
+        sliderInput(inputId = "numPaletteColors",
+                    label = "Number of Colors in Palette",
+                    min = 1,
+                    max = 6,
+                    value = 2),
+
       ),
 
       conditionalPanel(
@@ -104,13 +124,16 @@ ui <- fluidPage(
                     value = "#cdd690"),
       ),
 
-      # Options for "Squares" generator
+      conditionalPanel(
+        condition = "input.generator == 'Ribbons' | input.generator == 'Watercolor'",
+        colourInput(inputId = "background",
+                    label = "Background Color",
+                    value = "#FFFFFF"),
+      ),
+
+      # "Squares" generator options ####
       conditionalPanel(
         condition = "input.generator == 'Squares'",
-
-        # colourInput(inputId = "borderColor",
-        #             label = "Border color",
-        #             value = "Black"),
 
         sliderInput(inputId = "cuts",
                     label = "Cuts",
@@ -126,29 +149,50 @@ ui <- fluidPage(
                     step = .01),
 
         sliderInput(inputId = "resolution",
-                    label = "resolution",
+                    label = "Resolution",
                     min = 20,
                     max = 400,
                     value = 100)
       ),
 
-      # Options for "Watercolor" generator
+      # "Ribbons" generator options ####
+      conditionalPanel(
+        condition = "input.generator == 'Ribbons'",
+
+        prettyCheckbox(inputId = "triangle",
+                       label = "Triangle?",
+                       value = TRUE,
+                       bigger = TRUE,
+                       outline = TRUE),
+
+        sliderInput(inputId = "ribbonWidth",
+                    label = "Ribbon Width",
+                    value = 2.5,
+                    min = 1,
+                    max = 10),
+
+        sliderInput(inputId = "maxHeight",
+                    label = "Max Ribbon Height",
+                    min = 50,
+                    max = 100,
+                    value = 75),
+
+        sliderInput(inputId = "minHeight",
+                    label = "Min Ribbon Height",
+                    min = 0,
+                    max = 50,
+                    value = 25),
+      ),
+
+      # "Watercolor" generator options ####
       conditionalPanel(
         condition = "input.generator == 'Watercolor'",
 
-        colourInput(inputId = "background",
-                    label = "Background Color",
-                    value = "#FFFFFF"),
-
-        # colourInput(inputId = "borderColor",
-        #             label = "Border color",
-        #             value = "Black"),
-
         sliderInput(inputId = "layers",
-                    label = "layers",
-                    min = 5,
-                    max = 200,
-                    value = 50),
+                    label = "Layers",
+                    min = 1,
+                    max = 60,
+                    value = 20),
 
         sliderInput(inputId = "depth",
                     label = "Algorithm Depth",
@@ -162,8 +206,7 @@ ui <- fluidPage(
     ),
 
     # Create resizable image as output
-
-    mainPanel(
+    mainPanel( # Main Panel ####
       jqui_resizable(plotOutput('aRt', width = '750px', height = '750px')),
     )
   )
@@ -178,7 +221,7 @@ server <- function(input, output) {
 
   # Dynamically create color selectors based on the number of colors chosen
   output$manualColors <- renderUI({
-    set.seed(input$seed)
+    # set.seed(input$seed)
     lapply(1:input$numColors, function(i) {
 
       colourInput(inputId = paste0('manualColor', i),
@@ -205,7 +248,7 @@ server <- function(input, output) {
     else if (input$colorChoice == "colorPalette") {
       set.seed(input$seed)
       if (input$colorPalette %in% c("dark1", "klimt")) {
-        plotColors <- colorPalette(input$colorPalette)
+        plotColors <- colorPalette(input$colorPalette, n = input$numPaletteColors)
       }
 
       else if (input$colorPalette == "Cividis") {
@@ -238,7 +281,12 @@ server <- function(input, output) {
 
     # Generator for ribbon style images
     else if (input$generator == "Ribbons") {
-      art <- canvas_ribbons(colors = plotColors)
+      art <- my_canvas_ribbons(colors = plotColors,
+                               triangle = input$triangle,
+                               background = input$background,
+                               maxHeight = input$maxHeight,
+                               minHeight = input$minHeight,
+                               ribbonWidth = input$ribbonWidth)
     }
 
     # Generator for watercolor-style images
