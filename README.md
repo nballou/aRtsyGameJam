@@ -1,6 +1,6 @@
 # aRtsyGameJam
 
-For a web version of the app (with very limited server usage), go to https://www.shinyapps.io/admin/#/application/5532338. 
+For a web version of the app (with very limited server usage), go to https://nick-ballou.shinyapps.io/artsygamejam/. 
 
 This is a project by [Nick Ballou](https://nickballou.com/) and [Elena Petrovskaya](https://elenapetrovskaya.com) to create a generative art app in Shiny.  It is heavily based on the [aRtsy R package by Koen Derks](https://github.com/koenderks/aRtsy). Essentially, we wanted to take this package and create an app that would be easily accessible to people who might not have much knowledge of R. In the process, we also made some tweaks/additions to the generator parameters. 
 
